@@ -1,0 +1,66 @@
+---
+title: "Discrete Choice Models examples"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(mlogit)
+```
+
+## Fitting model with weights
+```{r}
+destinations_df = read.csv('../../data/dcm_dataset.csv')
+destinations_df$src = factor(destinations_df$src)
+t(head(destinations_df, 5))
+```
+
+```{r}
+destinations_df_tr <- mlogit.data(destinations_df, choice = "dst", 
+                        shape = "wide", varying = c(12:31))
+#head(destinations_df_tr)
+```
+
+```{r}
+my_formula = mFormula(dst ~ av_wage + rate_1usd + dst_cpi + dst_qoe_top100 | src + src_population + src_qoe_top500 + src_gni + src_gdp + src_ter_enr)
+
+fit = mlogit(my_formula, data = destinations_df_tr, reflevel="AUS", weights = dst_students_count)
+summary(fit)
+```
+
+## Ungrouped data 
+```{r}
+destinations_df = read.csv('../../data/dcm_dataset.ungrouped.csv')
+destinations_df$src = factor(destinations_df$src)
+destinations_df$yr = factor(destinations_df$yr)
+head(destinations_df, 2)
+```
+
+```{r}
+my_formula = mFormula(dst ~ av_wage + rate_1usd + dst_cpi + dst_qoe_top100 | src:yr + src_population + src_qoe_top500 + src_gni + src_gdp + src_ter_enr + yr )
+
+fit = mlogit(my_formula, data = destinations_df, varying = c(12:31),
+             shape = 'wide', reflevel="AUS")
+
+summary(fit)
+```
+
+```{r}
+data = data.frame(coef(summary(fit)))
+write.table(data, '../../data/coefficients.txt', sep=',', col.names = FALSE)
+```
+
+### Model on ungrouped data where 10% students counts were transformed into individuals 
+```{r}
+my_formula = mFormula(dst ~ av_wage + rate_1usd + dst_cpi + dst_qoe_top100 | src + src_population + src_qoe_top500 + src_gni + src_gdp + src_ter_enr)
+
+#fit = mlogit(my_formula, data = destinations_df, varying = c(12:31), shape = 'wide', reflevel="aus", weights=dst_students_count)
+#summary(fit)
+```
+
+```{r}
+qchisq(c(0.02, 0.5, 0.95), df = 99)
+```
